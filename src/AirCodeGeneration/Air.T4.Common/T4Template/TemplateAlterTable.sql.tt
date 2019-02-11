@@ -1,0 +1,181 @@
+﻿<#@ template language="C#" hostSpecific="true" debug="false" #>  
+<#@ output extension=".cs" #>
+
+<# 
+   
+    DataBaseCoreHost host = (DataBaseCoreHost)(Host); 
+    var databaseInfo=host.Database;
+	List<AlterTableModel> lstModels=host.lstModels;
+	List<AlterTableModel> modelAdd = lstModels.FindAll(p=>p.OperateType.Equals("添加"));
+	List<AlterTableModel> modelDel = lstModels.FindAll(p=>p.OperateType.Equals("删除"));
+	List<AlterTableModel> modelModify = lstModels.FindAll(p=>p.OperateType.Equals("修改类型"));
+	string tbName=host.DatabaseTableName;
+#>
+declare @pkConstraintName varchar(200)--主键约束名
+declare @dfConstraintName varchar(200)--默认值约束名
+declare @indexName varchar(200)--索引约束名
+<#
+	if(!string.IsNullOrEmpty(databaseInfo.Name.Trim()))
+	{
+#>
+USE  [<#=        databaseInfo.Name #>]
+<#
+	}
+#>
+
+<#
+	if(modelAdd.Count>0)
+	{
+#>
+---------------------------新增字段------------------------------
+<#
+		foreach(AlterTableModel model in modelAdd)
+		{
+#>
+if not exists( select id from syscolumns where id in( select id  from sysobjects where id=OBJECT_ID('<#= tbName #>') ) and name='<#= model.Name #>'  )
+	alter table <#= tbName #> add <#= model.Name #> <#= model.DataType #><# if(!string.IsNullOrWhiteSpace(model.IdentityValue)) { #> <#= model.IdentityValue #> <# } #><# if(!string.IsNullOrWhiteSpace(model.Constraint)){ #> <#= model.Constraint #><# } #><# if(!string.IsNullOrWhiteSpace(model.DefaultValue)){ #> default <#=  model.DefaultValue #> <# }#><# if(model.IsPramaryKey){ #> Primary Key <# } #> 
+
+<#
+
+		}
+	}
+#>
+
+<#
+	if(modelDel.Count>0)
+	{
+#>
+---------------------------删除字段------------------------------
+<#
+		foreach(AlterTableModel model in modelDel)
+		{
+#>
+---------删除字段[<#= model.Name #>]-----
+set @pkConstraintName='';
+set @dfConstraintName='';
+set @indexName=''
+<#
+			if(model.IsPramaryKey)
+			{
+#>
+---删除主键约束
+select @pkConstraintName= name 
+from sys.objects 
+where type_desc='Primary_key_constraint'
+and parent_object_id=object_id('<#= tbName #>')
+if(@pkConstraintName!='')
+begin
+	exec('alter table <#= tbName #> drop constraint '+@pkConstraintName);
+end
+<#
+			}
+#>
+--删除默认值约束
+select @dfConstraintName= b.name 
+from sysobjects b 
+join syscolumns a on b.id = a.cdefault 
+where a.id = object_id('<#= tbName #>') 
+and a.name ='<#= model.Name #>'
+if(@dfConstraintName!='')
+begin
+	exec('alter table <#= tbName #> drop constraint '+@dfConstraintName)
+	set @dfConstraintName='';
+end
+--删除索引
+SELECT @indexName=a.name
+FROM sysindexes a  
+JOIN sysindexkeys b ON a.id=b.id AND a.indid=b.indid  
+JOIN sysobjects c ON b.id=c.id  
+JOIN syscolumns d ON b.id=d.id AND b.colid=d.colid  
+WHERE c.xtype='U' 
+AND c.name='<#= tbName #>' 
+and d.name='<#= model.Name #>'
+if(@indexName!='')
+begin
+	exec('drop index '+@indexName +' on <#= tbName #>');
+	set @indexName='';
+end
+--从表中删除该字段
+alter table [<#= tbName#>] drop column [<#= model.Name #>]
+
+<#
+		}
+	}
+#>
+
+<#
+	if(modelModify.Count>0)
+	{
+#>
+---------------------------修改字段类型------------------------------
+<#
+		foreach(AlterTableModel model in modelModify)
+		{
+#>
+---------修改字段[<#= model.Name #>]的类型-----
+set @pkConstraintName='';
+set @dfConstraintName='';
+set @indexName=''
+<#
+			if(model.IsPramaryKey)
+			{
+#>
+--删除主键约束
+select @pkConstraintName= name 
+from sys.objects 
+where type_desc='Primary_key_constraint'
+and parent_object_id=object_id('<#= tbName #>')
+if(@pkConstraintName!='')
+begin
+	exec('alter table <#= tbName #> drop constraint '+@pkConstraintName)
+end
+<#
+			}
+#>
+--删除默认值约束
+select @dfConstraintName= b.name 
+from sysobjects b 
+join syscolumns a on b.id = a.cdefault 
+where a.id = object_id('<#= tbName #>') 
+and a.name ='<#= model.Name #>'
+if(@dfConstraintName!='')
+begin
+	exec('alter table <#= tbName #> drop constraint '+@dfConstraintName)
+	set @dfConstraintName='';
+end
+--删除索引
+SELECT @indexName=a.name
+FROM sysindexes a  
+JOIN sysindexkeys b ON a.id=b.id AND a.indid=b.indid  
+JOIN sysobjects c ON b.id=c.id  
+JOIN syscolumns d ON b.id=d.id AND b.colid=d.colid  
+WHERE c.xtype='U' 
+AND c.name='<#= tbName #>' 
+and d.name='<#= model.Name #>'
+if(@indexName!='')
+begin
+	exec('drop index '+@indexName +' on <#= tbName #>');
+end
+--修改字段类型
+alter table <#= tbName #> alter column <#= model.Name #> <#= model.DataType #><# if(!string.IsNullOrWhiteSpace(model.Constraint)){ #> <#= model.Constraint #><# } #>
+--添加默认值约束
+if(@dfConstraintName!='')
+begin
+	exec('alter table <#= tbName #> add constraint '+ @dfConstraintName+' default <#= model.DefaultValue #> for <#= model.Name #>');
+end
+--添加主键约束
+if(@pkConstraintName!='')
+begin
+	exec('alter table <#= tbName #> add constraint '+ @pkConstraintName +' primary key(<#= model.Name #>)');
+end
+--添加索引
+if(@indexName!='')
+begin
+	exec('create index '+ @indexName +' on <#= tbName #>(<#= model.Name #>)')
+end
+
+<#
+		}
+	}
+#>
+

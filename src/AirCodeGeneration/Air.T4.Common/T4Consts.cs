@@ -20,6 +20,11 @@ namespace Air.T4.Common
         /// T4文件存储文件夹名称
         /// </summary>
         public const string FILE_Folder = "T4Template";
+
+        /// <summary>
+        /// 修改数据表T4文件名
+        /// </summary>
+        public const string DB_TABLE_ALTER_FILE_NAME = "TemplateAlterTable.sql.tt";
     }
 
 }

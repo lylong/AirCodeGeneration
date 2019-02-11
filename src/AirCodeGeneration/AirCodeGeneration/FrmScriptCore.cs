@@ -18,6 +18,7 @@ using Air.T4.Common;
 using Air.T4.Common.Host;
 using Air.T4.Common.Model.Database;
 using AutoMapper;
+using Air.Currency.Frame.Library.Extension;
 
 namespace AirCodeGeneration
 {
@@ -263,6 +264,122 @@ namespace AirCodeGeneration
         private void txt_Output_Click(object sender, EventArgs e)
         {
             System.Diagnostics.Process.Start("Explorer", $"{this.txt_Output.Text.Trim()}");
+        }
+
+        /// <summary>
+        /// 双击网格的单元格,显示类的详细信息
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void dgv_Dll_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            #region 验证
+            if (dgv_Dll.DataSource == null)
+                return;
+            DataTable tb = (DataTable)dgv_Dll.DataSource;
+            if (tb == null || tb.Rows.Count <= 0)
+                return;
+            if (e.RowIndex < 0 || e.RowIndex > dgv_Dll.Rows.Count - 2)
+                return;
+            #endregion
+
+            string className = dgv_Dll.Rows[e.RowIndex].Cells["Col_Name"].Value.ToString();
+            GetClassDetail(className,(int)cmb_Platform.SelectedValue);
+        }
+
+        /// <summary>
+        /// 获取类的详细信息
+        /// </summary>
+        /// <param name="className">类名</param>
+        /// <param name="platForm">DLL平台</param>
+        private void GetClassDetail(string className,int platForm=1)
+        {
+            #region 构建DataTable
+            DataTable dt = new DataTable();
+            dt.Columns.Add(new DataColumn("Id", typeof(Int32)));//序号
+            dt.Columns.Add(new DataColumn("Sel",typeof(Int32)));//选择
+            dt.Columns.Add(new DataColumn("Name", typeof(string)));//字段名
+            dt.Columns.Add(new DataColumn("IsPramaryKey", typeof(string)));//是否主键
+            dt.Columns.Add(new DataColumn("IdentityValue", typeof(string)));//自增值 
+            dt.Columns.Add(new DataColumn("DataType", typeof(string)));//数据类型
+            dt.Columns.Add(new DataColumn("DefaultValue", typeof(string)));//默认值
+            dt.Columns.Add(new DataColumn("Constraint", typeof(string)));//约束
+            dt.Columns.Add(new DataColumn("OperateType", typeof(string)));//操作类型(添加，删除，修改字段类型)
+            #endregion
+
+            #region 通过反射获取选指定类的信息，并且获取自定义特性
+            Type t = _lst_Types.Find(p => p.Name == className);
+            List<PropertyInfo> lstField = new List<PropertyInfo>();
+            switch(platForm)
+            {
+                case 1://.Net Standard
+                    lstField = t.GetProperties()
+                            .Where(p => p.GetCustomAttribute<Air.CodeGeneration.Data.Core.Attribute.DataBaseFieldRuleAttribute>() != null)
+                            .ToList();
+                    break;
+                case 2://Framework
+                    lstField = t.GetProperties()
+                            .Where(p => p.GetCustomAttribute<Air.CodeGeneration.Data.Attribute.DataBaseFieldRuleAttribute>() != null)
+                            .ToList();
+                    break;
+            }
+            #endregion
+
+            #region 遍历属性，根据属性的自定义特性拼凑表数据
+            int i = 0;
+            DataRow dr = null;
+            foreach (PropertyInfo field in lstField)
+            {
+                i++;
+                switch(platForm)
+                {
+                    case 1://.Net Standard
+                        #region 获取这个字段的自定义特性，拼凑DataTable的数据
+                        List<Air.CodeGeneration.Data.Core.Attribute.DataBaseFieldRuleAttribute> lstCoreAttrs = new List<DataBaseFieldRuleAttribute>();
+                        Air.CodeGeneration.Data.Core.Attribute.DataBaseFieldRuleAttribute coreAttribute = field.GetAttribute<Air.CodeGeneration.Data.Core.Attribute.DataBaseFieldRuleAttribute>();
+                        dr = dt.NewRow();
+                        dr["Id"] = i;
+                        dr["Sel"] = 0;
+                        dr["Name"] = Convertor.IsNull(coreAttribute.Name, field.Name);// 字段名
+                        dr["IsPramaryKey"] = Convert.ToInt32(coreAttribute.IsPramaryKey);//是否是主键
+                        dr["IdentityValue"] = Convertor.IsNull(coreAttribute.IdentityValue,"");// 自增值
+                        dr["DataType"] = Convertor.IsNull(coreAttribute.DataType, "");//数据类型
+                        dr["DefaultValue"] = Convertor.IsNull(coreAttribute.DefaultValue, "");//默认值
+                        dr["Constraint"] = Convertor.IsNull(coreAttribute.Constraint, "");//约束
+                        dr["OperateType"] = "";
+                        dt.Rows.Add(dr);
+                        #endregion 
+                        break;
+                    case 2://Framework
+                        #region 获取这个字段的自定义特性，拼凑DataTable的数据
+                        List < Air.CodeGeneration.Data.Attribute.DataBaseFieldRuleAttribute > lstAttrs = new List<Air.CodeGeneration.Data.Attribute.DataBaseFieldRuleAttribute>();
+                        Air.CodeGeneration.Data.Attribute.DataBaseFieldRuleAttribute attribute = field.GetAttribute<Air.CodeGeneration.Data.Attribute.DataBaseFieldRuleAttribute>();
+                        dr = dt.NewRow();
+                        dr["Id"] = i;
+                        dr["Sel"] = 0;
+                        dr["Name"] = Convertor.IsNull(attribute.Name, field.Name);// 字段名
+                        dr["IsPramaryKey"] = Convert.ToInt32(attribute.IsPramaryKey);//是否是主键
+                        dr["IdentityValue"] = Convertor.IsNull(attribute.IdentityValue, "");// 自增值
+                        dr["DataType"] = Convertor.IsNull(attribute.DataType, "");//数据类型
+                        dr["DefaultValue"] = Convertor.IsNull(attribute.DefaultValue, "");//默认值
+                        dr["Constraint"] = Convertor.IsNull(attribute.Constraint, "");//约束
+                        dr["OperateType"] = "";
+                        dt.Rows.Add(dr);
+                        #endregion
+                        break;
+                }
+            }
+
+            #endregion
+            if (dt != null && dt.Rows.Count > 0)
+            {
+                dt.TableName = className;
+                FrmClassDetailInfo frmClassInfo = new FrmClassDetailInfo(this.txt_DatabaseName.Text.Trim(), className, dt);
+                frmClassInfo.ShowDialog();
+            }
+
+
+
         }
     }
 }

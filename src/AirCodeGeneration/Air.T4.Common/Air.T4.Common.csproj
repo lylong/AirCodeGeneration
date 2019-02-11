@@ -192,6 +192,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AutoMapperProfile\HostDatabaseTableProfile.cs" />
+    <Compile Include="Model\DatabaseTableInfo\AlterTableModel.cs" />
     <Compile Include="T4Consts.cs" />
     <Compile Include="Host\BaseHost.cs" />
     <Compile Include="Host\DataBaseCoreHost.cs" />
@@ -229,12 +230,18 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="T4Template\TemplateAlterTable.sql.tt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="T4Template\TemplateCoreCreateDataBaseTable.sql.tt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="T4Template\TemplateCreateDataBaseTable.sql.tt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\SQLitePCLRaw.lib.e_sqlite3.linux.1.1.2\build\SQLitePCLRaw.lib.e_sqlite3.linux.targets" Condition="Exists('..\packages\SQLitePCLRaw.lib.e_sqlite3.linux.1.1.2\build\SQLitePCLRaw.lib.e_sqlite3.linux.targets')" />

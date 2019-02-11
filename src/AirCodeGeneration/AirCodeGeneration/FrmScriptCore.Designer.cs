@@ -52,9 +52,9 @@
             this.btn_SelectDLL = new System.Windows.Forms.Button();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.pan_Head = new System.Windows.Forms.Panel();
+            this.btn_OpenFileDir = new System.Windows.Forms.Button();
             this.cmb_Platform = new System.Windows.Forms.ComboBox();
             this.label4 = new System.Windows.Forms.Label();
-            this.btn_OpenFileDir = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dgv_Dll)).BeginInit();
             this.tab_Details.SuspendLayout();
             this.tabControl_Pages.SuspendLayout();
@@ -97,6 +97,7 @@
             this.dgv_Dll.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dgv_Dll.Size = new System.Drawing.Size(1311, 446);
             this.dgv_Dll.TabIndex = 1;
+            this.dgv_Dll.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgv_Dll_CellDoubleClick);
             // 
             // Col_Sel
             // 
@@ -220,10 +221,10 @@
             // 
             // btn_Execute
             // 
-            this.btn_Execute.Location = new System.Drawing.Point(1012, 100);
+            this.btn_Execute.Location = new System.Drawing.Point(1012, 108);
             this.btn_Execute.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btn_Execute.Name = "btn_Execute";
-            this.btn_Execute.Size = new System.Drawing.Size(133, 35);
+            this.btn_Execute.Size = new System.Drawing.Size(133, 27);
             this.btn_Execute.TabIndex = 3;
             this.btn_Execute.Text = "生成SQL脚本";
             this.btn_Execute.UseVisualStyleBackColor = true;
@@ -281,6 +282,17 @@
             this.pan_Head.Size = new System.Drawing.Size(1325, 148);
             this.pan_Head.TabIndex = 2;
             // 
+            // btn_OpenFileDir
+            // 
+            this.btn_OpenFileDir.Location = new System.Drawing.Point(1172, 62);
+            this.btn_OpenFileDir.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.btn_OpenFileDir.Name = "btn_OpenFileDir";
+            this.btn_OpenFileDir.Size = new System.Drawing.Size(129, 28);
+            this.btn_OpenFileDir.TabIndex = 9;
+            this.btn_OpenFileDir.Text = "打开输出目录";
+            this.btn_OpenFileDir.UseVisualStyleBackColor = true;
+            this.btn_OpenFileDir.Click += new System.EventHandler(this.btn_OpenFileDir_Click);
+            // 
             // cmb_Platform
             // 
             this.cmb_Platform.FormattingEnabled = true;
@@ -297,17 +309,6 @@
             this.label4.Size = new System.Drawing.Size(71, 18);
             this.label4.TabIndex = 6;
             this.label4.Text = "DLL平台";
-            // 
-            // btn_OpenFileDir
-            // 
-            this.btn_OpenFileDir.Location = new System.Drawing.Point(1172, 62);
-            this.btn_OpenFileDir.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.btn_OpenFileDir.Name = "btn_OpenFileDir";
-            this.btn_OpenFileDir.Size = new System.Drawing.Size(129, 28);
-            this.btn_OpenFileDir.TabIndex = 9;
-            this.btn_OpenFileDir.Text = "打开输出目录";
-            this.btn_OpenFileDir.UseVisualStyleBackColor = true;
-            this.btn_OpenFileDir.Click += new System.EventHandler(this.btn_OpenFileDir_Click);
             // 
             // FrmScriptCore
             // 
